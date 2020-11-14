@@ -112,7 +112,7 @@ namespace Juntar
         private string LerArquivoRetornarTexto(string pasta)
         {
             var retorno = new StringBuilder();
-            var arquivos = Directory.GetFiles(pasta, "*.*").Where(s => _filtroExtencaoArquivo.Any(f => s.EndsWith(f))).OrderBy(x => x);
+            var arquivos = Directory.GetFiles(pasta).Where(s => _filtroExtencaoArquivo.Any(f => s.EndsWith(f))).OrderBy(x => x);
             foreach (var arquivo in arquivos)
             {
                 var nomeArquivo = ObterNomeAmigavel(arquivo);
@@ -129,15 +129,15 @@ namespace Juntar
         }
         private string ObterTextoAquivo(string arquivo)
         {
-            var endodeArquivo = GetEncoding(arquivo);
-            var textoArquivo = File.ReadAllText(arquivo, endodeArquivo);
-            return textoArquivo;
+            var bytesArquivo = File.ReadAllBytes(arquivo);
+            var endodeArquivo = GetEncoding(bytesArquivo);
+            
+            return endodeArquivo.GetString(bytesArquivo);
         }
 
-        public static Encoding GetEncoding(string filename)
+        public static Encoding GetEncoding(byte[] bytesFile)
         {
-            var textDetect = new TextEncodingDetect();
-            TextEncodingDetect.Encoding encoding = textDetect.DetectEncoding(File.ReadAllBytes(filename), File.ReadAllBytes(filename).Length);
+            TextEncodingDetect.Encoding encoding = new TextEncodingDetect().DetectEncoding(bytesFile, bytesFile.Length);
             switch (encoding)
             {
                 case TextEncodingDetect.Encoding.None:
