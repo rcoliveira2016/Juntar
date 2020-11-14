@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace Juntar
+namespace Juntar.Text
 {
-    static class WindowsClipboard
+    public static class WindowsClipboard
     {
         public static void SetText(string text)
         {

@@ -1,7 +1,9 @@
 ﻿using AutoIt.Common;
 using CommandLine;
+using Juntar.Text;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,52 +13,86 @@ namespace Juntar
 {
     public class Main
     {
-        private static readonly string PastaAtual = Environment.CurrentDirectory;
-        private static readonly StringBuilder TextoArquivofinal = new StringBuilder();
-        private static readonly string[] FiltroExtencaoArquivo = new string[] { ".sql" };
-        private static readonly string NomeAquivoFinal = "compilado-juntar.sql";
-        private static readonly string NnomeArquivoCompilado = $@"{PastaAtual}\{NomeAquivoFinal}";
-        public readonly Opcoes opcoes;
-        private static int ContadorDeArquivos = 0;
+        private const string _nomeAquivoFinal = "compilado-juntar.sql";
+        private static readonly string[] _filtroExtencaoArquivo = new string[] { ".sql" };
+        private static readonly Stopwatch _stopwatch = new Stopwatch();
 
-        public Main(Opcoes opcoes)
+        private readonly StringBuilder _textoArquivofinal;
+        private readonly string _nomeArquivoCompilado;
+        private readonly Parametros Parametros;
+
+        private static int _contadorDeArquivos = 0;
+
+        public Main(Parametros parametros)
         {
-            this.opcoes = opcoes;
+            _stopwatch.Start();
+            this.Parametros = parametros;
+
+            _textoArquivofinal = new StringBuilder();
+
+            if (string.IsNullOrEmpty(this.Parametros.PastaDestino))
+                this.Parametros.PastaDestino = Environment.CurrentDirectory;
+            if (string.IsNullOrEmpty(this.Parametros.NomeAquivoFinal))
+                this.Parametros.NomeAquivoFinal = _nomeAquivoFinal;
+
+            _nomeArquivoCompilado = $@"{Parametros.PastaDestino}\{Parametros.NomeAquivoFinal}";
         }
 
         public void Iniciar()
         {
             AdicionarArquivosEmSubPastas();
 
-            EscreverConsole($"PASTA - {ObterNomeAmigavel(PastaAtual)}");
+            ObterTextoPastaAtual();
 
-            TextoArquivofinal.Append(LerArquivoRetornarTexto(PastaAtual));
-
-            EscreverConsole($"!!AVISO: Foram compilado apenas arquivos com essas extensões {FiltroExtencaoArquivo.Aggregate((a, b) => $"{a}, {b}")} ");
-            EscreverConsole($"TOTAL de arquivos compilados {ContadorDeArquivos}");
-
-            if (opcoes.ClipBord)
-                WindowsClipboard.SetText(TextoArquivofinal.ToString());
+            if (Parametros.ClipBord)
+                WindowsClipboard.SetText(_textoArquivofinal.ToString());
             else
                 SalvarArquivoCompilado();
+
+            NotificarAposCompilarConteudoArquivos();
+        }
+
+        private void NotificarAposCompilarConteudoArquivos()
+        {
+            _stopwatch.Stop();
+
+            EscreverConsole("!!AVISO: ", true, ConsoleColor.Red);
+            EscreverConsole($"Foram compilado apenas arquivos com essas extensões:", true, ConsoleColor.DarkGreen);
+            EscreverConsole($" {_filtroExtencaoArquivo.Aggregate((a, b) => $"{a}, {b}")}", true, ConsoleColor.Yellow);
+
+            EscreverConsoleQuebraLinha(true);
+            EscreverConsole("TOTAL de ", true, ConsoleColor.DarkGreen);
+            EscreverConsole($"{_contadorDeArquivos} ", true, ConsoleColor.Yellow);
+            EscreverConsole("arquivos compilados", true, ConsoleColor.DarkGreen);
+
+            EscreverConsoleQuebraLinha(true);
+            EscreverConsole("Tempo de excução: ", true, ConsoleColor.DarkGreen);
+            EscreverConsole($"{_stopwatch.Elapsed.ToString(@"hh\:mm\:ss\:ff")}", true, ConsoleColor.Yellow);
+        }
+
+        private void ObterTextoPastaAtual()
+        {
+            EscreverTelaNomePasta(this.Parametros.PastaDestino);
+
+            _textoArquivofinal.Append(LerArquivoRetornarTexto(this.Parametros.PastaDestino));
         }
 
         private void SalvarArquivoCompilado()
         {
-            if (File.Exists(NnomeArquivoCompilado))
-                File.Delete(NnomeArquivoCompilado);
-            File.WriteAllText(NnomeArquivoCompilado, TextoArquivofinal.ToString(), Encoding.UTF8);
+            if (File.Exists(_nomeArquivoCompilado))
+                File.Delete(_nomeArquivoCompilado);
 
+            File.WriteAllText(_nomeArquivoCompilado, _textoArquivofinal.ToString(), Encoding.UTF8);
         }
 
         private void AdicionarArquivosEmSubPastas()
         {
-            if (!opcoes.SubPasta)
+            if (!Parametros.SubPasta)
                 return;
 
-            var diretorios = Directory.GetDirectories(PastaAtual);
+            var diretorios = Directory.GetDirectories(this.Parametros.PastaDestino);
             foreach (var pastas in diretorios)
-                TextoArquivofinal.Append(LerSubPastasRetornarTexto(pastas));
+                _textoArquivofinal.Append(LerSubPastasRetornarTexto(pastas));
         }
 
         private string LerSubPastasRetornarTexto(string diretorioParametro)
@@ -64,11 +100,11 @@ namespace Juntar
             var retorno = new StringBuilder();
             foreach (var pastaAtual in Directory.GetDirectories(diretorioParametro))
             {
-                EscreverConsole($"PASTA - {(pastaAtual)}");
+                EscreverTelaNomePasta(pastaAtual);
                 retorno.Append(LerSubPastasRetornarTexto(pastaAtual));
             }
 
-            EscreverConsole($"PASTA - {ObterNomeAmigavel(diretorioParametro)}");
+            EscreverTelaNomePasta(diretorioParametro);
             retorno.Append(LerArquivoRetornarTexto(diretorioParametro));
             return retorno.ToString();
         }
@@ -76,7 +112,7 @@ namespace Juntar
         private string LerArquivoRetornarTexto(string pasta)
         {
             var retorno = new StringBuilder();
-            var arquivos = Directory.GetFiles(pasta, "*.*").Where(s => FiltroExtencaoArquivo.Any(f => s.EndsWith(f))).OrderBy(x => x);
+            var arquivos = Directory.GetFiles(pasta, "*.*").Where(s => _filtroExtencaoArquivo.Any(f => s.EndsWith(f))).OrderBy(x => x);
             foreach (var arquivo in arquivos)
             {
                 var nomeArquivo = ObterNomeAmigavel(arquivo);
@@ -84,17 +120,17 @@ namespace Juntar
                 retorno.AppendLine($"-- {nomeArquivo}");
                 retorno.AppendLine("-------------------------------------------------------------------------------------------------------");
                 retorno.AppendLine(ObterTextoAquivo(arquivo));
-                EscreverConsole($"Arquivo: {nomeArquivo}");
-                ContadorDeArquivos++;
+                EscreverConsoleQuebraLinha($"Arquivo: {nomeArquivo}", consoleColor: ConsoleColor.Yellow);
+                _contadorDeArquivos++;
             }
 
+            EscreverConsoleQuebraLinha();
             return retorno.ToString();
         }
         private string ObterTextoAquivo(string arquivo)
         {
             var endodeArquivo = GetEncoding(arquivo);
             var textoArquivo = File.ReadAllText(arquivo, endodeArquivo);
-            EscreverConsole(textoArquivo);
             return textoArquivo;
         }
 
@@ -127,15 +163,39 @@ namespace Juntar
             }
         }
 
-        public static string ObterNomeAmigavel(string diretorio)
+        private static string ObterNomeAmigavel(string diretorio)
         {
             return diretorio?.Split('\\')?.LastOrDefault();
         }
 
-        public void EscreverConsole(string mensagem)
+        private void EscreverTelaNomePasta(string diretorio) => EscreverConsoleQuebraLinha($"PASTA: {diretorio}", consoleColor: ConsoleColor.Magenta);
+
+        private void EscreverConsoleQuebraLinha(string mensagem, bool ignorarVerbeso = false, ConsoleColor consoleColor = default(ConsoleColor))
         {
-            if(!opcoes.NaoMostrar)
-                Console.WriteLine(mensagem);
+            EscreverConsoleBase(mensagem, Console.WriteLine, ignorarVerbeso, consoleColor);
+        }
+
+        private void EscreverConsole(string mensagem, bool ignorarVerbeso = false, ConsoleColor consoleColor = default(ConsoleColor))
+        {
+            EscreverConsoleBase(mensagem, Console.Write, ignorarVerbeso, consoleColor);
+        }
+
+        private void EscreverConsoleQuebraLinha(bool ignorarVerbeso = false)
+        {
+            if (ignorarVerbeso || Parametros.Verbeso)
+                Console.WriteLine();
+        }
+
+        private void EscreverConsoleBase(string mensagem, Action<string> consoleWrite, bool ignorarVerbeso = false, ConsoleColor consoleColor = default(ConsoleColor))
+        {
+            if(ignorarVerbeso || Parametros.Verbeso)
+            {
+                Console.ForegroundColor = consoleColor;
+
+                consoleWrite(mensagem);
+
+                Console.ResetColor();
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Juntar
     {
         static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<Opcoes>(args)
+            Parser.Default.ParseArguments<Parametros>(args)
             .WithParsed(o => new Main(o).Iniciar());
         }
     }
