@@ -13,13 +13,13 @@ namespace Juntar
 {
     public class Main
     {
-        private const string _nomeAquivoFinal = "compilado-juntar.sql";
-        private static readonly string[] _filtroExtencaoArquivo = new string[] { ".sql" };
+        private const string _nomePadraoAquivoFinal = "compilado-juntar.sql";
         private static readonly Stopwatch _stopwatch = new Stopwatch();
 
         private readonly StringBuilder _textoArquivofinal;
         private readonly string _nomeArquivoCompilado;
         private readonly Parametros Parametros;
+        private readonly string[] _filtroExtencaoArquivo;
 
         private static int _contadorDeArquivos = 0;
 
@@ -32,10 +32,13 @@ namespace Juntar
 
             if (string.IsNullOrEmpty(this.Parametros.PastaDestino))
                 this.Parametros.PastaDestino = Environment.CurrentDirectory;
-            if (string.IsNullOrEmpty(this.Parametros.NomeAquivoFinal))
-                this.Parametros.NomeAquivoFinal = _nomeAquivoFinal;
 
-            _nomeArquivoCompilado = $@"{Parametros.PastaDestino}\{Parametros.NomeAquivoFinal}";
+            _nomeArquivoCompilado = string.IsNullOrEmpty(this.Parametros.CaminhoAquivoCompilado) ?
+                 $@"{Parametros.PastaDestino}\{_nomePadraoAquivoFinal}" :
+                 this.Parametros.CaminhoAquivoCompilado;
+
+            _filtroExtencaoArquivo = 
+                this.Parametros.Extencao.Select(x=> x.Trim()).Select(x=> x[0] == '.' ? x: $".{x}").ToArray();
         }
 
         public void Iniciar()
@@ -143,7 +146,7 @@ namespace Juntar
                 case TextEncodingDetect.Encoding.None:
                     return Encoding.Default;
                 case TextEncodingDetect.Encoding.Ansi:
-                    return Encoding.Default;
+                    return Encoding.UTF7;
                 case TextEncodingDetect.Encoding.Ascii:
                     return Encoding.ASCII;
                 case TextEncodingDetect.Encoding.Utf8Bom:

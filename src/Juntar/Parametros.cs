@@ -1,5 +1,6 @@
 ﻿
 using CommandLine;
+using System.Collections.Generic;
 
 namespace Juntar
 {
@@ -17,8 +18,17 @@ namespace Juntar
         [Option('p', "pastaDestino", Required = false, HelpText = "Pasta destino onde será compilado os arquivos.")]
         public string PastaDestino { get; set; }
 
-        [Option('a', "NomeAquivoFinal", Required = false, HelpText = "Nome do aquivo compilado.")]
-        public string NomeAquivoFinal { get; set; }
+        [Option('a', "CaminhoAquivoCompilado", Required = false, HelpText = "Caminho do aquivo compilado.")]
+        public string CaminhoAquivoCompilado { get; set; }
+
+        [Option(
+            'e', 
+            "Extencao", 
+            Required = false, 
+            HelpText = "Exntenção para filtrar. Padão .sql. Exemplo: .sql,.txt.,.cs ",
+            Separator =',',
+            Default = new string[] { ".sql" })]
+        public IList<string> Extencao { get; set; }
     }
 
 }
