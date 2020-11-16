@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Juntar": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-p \"C:\\d\\d\\Versões\" -c -e .sql -s"
     }
   }
 }

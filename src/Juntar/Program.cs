@@ -9,6 +9,8 @@ namespace Juntar
         {
             Parser.Default.ParseArguments<Parametros>(args)
             .WithParsed(o => new Main(o).Iniciar());
+            GC.Collect();
+            Environment.Exit(0);
         }
     }
 }
