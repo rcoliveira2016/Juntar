@@ -8,6 +8,13 @@ namespace Juntar.Text
 {
     public static class FileHelper
     {
+        private static readonly TextEncodingDetect _textEncodingDetect;
+
+        static FileHelper()
+        {
+            _textEncodingDetect = new TextEncodingDetect();
+        }
+
         public static string ObterTextoAquivo(string arquivo)
         {
             var bytesArquivo = File.ReadAllBytes(arquivo);
@@ -19,7 +26,7 @@ namespace Juntar.Text
         public static Encoding GetEncoding(byte[] bytesFile)
         {
             // https://stackoverflow.com/questions/33033514/how-can-i-convert-values-stored-in-ansi-windows-1252-in-a-database-to-utf-8
-            TextEncodingDetect.Encoding encoding = new TextEncodingDetect().DetectEncoding(bytesFile, bytesFile.Length);
+            TextEncodingDetect.Encoding encoding = _textEncodingDetect.DetectEncoding(bytesFile, bytesFile.Length);
             switch (encoding)
             {
                 case TextEncodingDetect.Encoding.None:
