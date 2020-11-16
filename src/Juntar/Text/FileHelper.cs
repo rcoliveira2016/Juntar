@@ -25,7 +25,7 @@ namespace Juntar.Text
                 case TextEncodingDetect.Encoding.None:
                     return Encoding.Default;
                 case TextEncodingDetect.Encoding.Ansi:
-                    return Encoding.UTF7;
+                    return Encoding.GetEncoding("ISO-8859-1");
                 case TextEncodingDetect.Encoding.Ascii:
                     return Encoding.ASCII;
                 case TextEncodingDetect.Encoding.Utf8Bom:
