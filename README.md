@@ -1,6 +1,6 @@
 # Juntar
  
-##instalação
+## instalação
 
 Rodar o seguinte comando nbo powershell
 
