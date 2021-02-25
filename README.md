@@ -12,3 +12,6 @@ scoop update
 scoop install juntar
 ```
 Nota: se você receber um erro, pode ser necessário alterar a política de execução (ou seja, habilitar o Powershell) com
+```powershell
+Set-ExecutionPolicy RemoteSigned -scope CurrentUser
+```
