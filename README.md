@@ -2,7 +2,7 @@
  
 ##instalação
 
-Rodar o seguinte comando
+Rodar o seguinte comando nbo powershell
 
 ```powershell
 Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
